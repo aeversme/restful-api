@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+import projectsecrets as ps
 import random
 
 app = Flask(__name__)
@@ -90,6 +91,18 @@ def update_coffee_price(cafe_id):
 
 
 # HTTP DELETE - Delete Record
+@app.route('/report_closed/<int:cafe_id>', methods=['DELETE'])
+def delete_cafe_record(cafe_id):
+    if request.args.get('api_key') == ps.API_KEY:
+        cafe_to_delete = Cafe.query.get(cafe_id)
+        if cafe_to_delete:
+            db.session.delete(cafe_to_delete)
+            db.session.commit()
+            return jsonify(response={'success': 'Successfully reported a closed cafe.'}), 200
+        else:
+            return jsonify(error={'Not Found': 'Sorry, a cafe with that id was not found in the database.'}), 404
+    else:
+        return jsonify(error={'Not Authorized': 'Sorry, that is not allowed. Make sure you have a valid api_key.'}), 403
 
 
 if __name__ == '__main__':
