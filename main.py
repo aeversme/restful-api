@@ -51,15 +51,43 @@ def get_all_cafes():
 def search_for_cafe():
     query_location = request.args.get('loc')
     cafes_near_location = db.session.query(Cafe).filter_by(location=query_location).all()
-    if not cafes_near_location:
-        return jsonify(error={'Not Found': 'Sorry, there are no cafes near that location.'})
-    else:
+    if cafes_near_location:
         return jsonify(cafe=[cafe.to_dict() for cafe in cafes_near_location])
+    else:
+        return jsonify(error={'Not Found': 'Sorry, there are no cafes near that location.'})
 
 
 # HTTP POST - Create Record
+@app.route('/add', methods=['POST'])
+def add_a_cafe():
+    new_cafe = Cafe(
+        name=request.form.get('name'),
+        map_url=request.form.get('map_url'),
+        img_url=request.form.get('img_url'),
+        location=request.form.get('loc'),
+        seats=request.form.get('seats'),
+        has_toilet=bool(int(request.form.get('toilet'))),
+        has_wifi=bool(int(request.form.get('wifi'))),
+        has_sockets=bool(int(request.form.get('sockets'))),
+        can_take_calls=bool(int(request.form.get('calls'))),
+        coffee_price=f"\u00a3{request.form.get('price')}",
+    )
+    db.session.add(new_cafe)
+    db.session.commit()
+    return jsonify(response={'success': 'Successfully added the new cafe.'})
+
 
 # HTTP PUT/PATCH - Update Record
+@app.route('/update_price/<int:cafe_id>', methods=['PUT', 'PATCH'])
+def update_coffee_price(cafe_id):
+    cafe_to_update = Cafe.query.get(cafe_id)
+    if cafe_to_update:
+        cafe_to_update.coffee_price = f"\u00a3{request.args.get('price')}"
+        db.session.commit()
+        return jsonify(response={'success': 'Successfully updated the price.'}), 200
+    else:
+        return jsonify(error={'Not Found': 'Sorry, a cafe with that id was not found in the database.'}), 404
+
 
 # HTTP DELETE - Delete Record
 
